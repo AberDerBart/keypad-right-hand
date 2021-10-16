@@ -1,0 +1,3 @@
+[submodule "KeyV2"]
+	path = KeyV2
+	url = git@github.com:AberDerBart/KeyV2.git

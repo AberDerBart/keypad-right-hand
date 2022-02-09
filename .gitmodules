@@ -1,3 +1,6 @@
 [submodule "KeyV2"]
-	path = KeyV2
+	path = keycaps/KeyV2
 	url = git@github.com:AberDerBart/KeyV2.git
+[submodule "qmk_firmware"]
+	path = qmk_firmware
+	url = git@github.com:AberDerBart/qmk_firmware.git

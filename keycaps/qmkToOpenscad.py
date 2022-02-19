@@ -1,23 +1,24 @@
 import argparse
 import json
+import re
 
 keymap = {
   "KC_NO": [],
   "KC_TRNS": [],
   "KC_MINS": ["-","_"],
   "KC_ESC": ["ESC"],
-  "KC_TAB": ["TAB"],
+  "KC_TAB": [{"text":"TAB", "offsetX":-.2}],
   "KC_QUOT": ["'","\\\""],
-  "KC_RSFT": [],
-  "KC_LSFT": [{"text":"⇧","size":10}],
-  "KC_LALT": ["ALT"],
-  "KC_RALT": ["GR", "ALT"],
-  "KC_LCTL": ["CTL"],
-  "KC_RCTL": [],
+  "KC_LSFT": [],
+  "KC_RSFT": [{"text":"⇧","size":10}],
+  "KC_LALT": [],
+  "KC_RALT": ["ALT"],
+  "KC_RCTL": ["CTL"],
+  "KC_LCTL": [],
   "KC_DEL": ["DEL"],
   "KC_SPC": [],
   "KC_BSPC": [{"text":"⇦","size":10,"offsetY":.2}],
-  "KC_ENT": [{"text":"⏎","size":10}],
+  "KC_ENT": [{"text":"⏎","size":10, "offsetX":-.2}],
   "KC_EQL": ["=","+"],
   "TO(2)": [],
   "KC_DOT": [".",">"],
@@ -47,7 +48,13 @@ keymap = {
   "LT(1,KC_NO)": [],
   "LT(2,KC_NO)": [],
   "TO(0)": [],
+  "MO(2)": [],
+  "MO(4)": [],
   "KC_GRV": ["`","~"],
+  "KC_LBRC": ["["],
+  "KC_RBRC": ["]"],
+  "KC_BSLS": ["\\\\","|"],
+  "TG(1)": ["ME","GA"],
 }
 
 def mapKey(code):
@@ -64,8 +71,9 @@ class KeyLabel:
       self.text = labelData
     else:
       self.text = labelData["text"]
-      self.size = labelData["size"]
+      self.size = labelData.get("size",4)
       self.y += labelData.get("offsetY",0)
+      self.x += labelData.get("offsetX",0)
 
   def toScad(self):
     return 'legend("{}", position=[{},{}], size={})'.format(
@@ -89,7 +97,7 @@ def labelCol(labels, x):
 def keyLayersToLabels(keyLayers):
   l0labels = keyLayers[0]
   otherLabels = []
-  for i,l in enumerate(keyLayers[1:]):
+  for i,l in enumerate(keyLayers[2:3]):
     if l:
       otherLabels += l
 
@@ -101,23 +109,33 @@ def keyLayersToLabels(keyLayers):
 
 def main():
   parser = argparse.ArgumentParser()
-  parser.add_argument("file")
+  parser.add_argument("--keyboard")
+  parser.add_argument("--keymap")
+  parser.add_argument("--filter")
 
   args = parser.parse_args()
 
-  f = open(args.file, "r")
-  data = json.load(f)
-  f.close()
+  # dependencies
+
+  print("include <KeyV2/includes.scad>")
+
+  # generate key labels
+
+  km_file = open(args.keymap, "r")
+  km_data = json.load(km_file)
+  km_file.close()
   
-  layers = data["layers"]
+  layers = km_data["layers"]
   nKeys= len(layers[0])
 
-  keys = [[mapKey(l[i]) for l in layers] for i in range(nKeys)]
-
+  key_labels = [[mapKey(l[i]) for l in layers] for i in range(nKeys)]
 
   print("module labeledKey(index){")
 
-  for i,key in enumerate(keys):
+  for i,key in enumerate(key_labels):
+    if args.filter:
+      if re.match(args.filter, layers[0][i]) is None:
+        continue
     print("if(index == {})".format(i))
     labelScad = keyLayersToLabels(key)
     for label in labelScad:
@@ -126,4 +144,28 @@ def main():
 
   print("}")
 
-main()
+  # generate kay positions and sizes
+
+  kb_file = open(args.keyboard, "r")
+  kb_data = json.load(kb_file)
+  kb_file.close()
+
+  key_positions = kb_data["layouts"]["LAYOUT_default"]["layout"]
+
+  print("module positionedKey(index){")
+
+  for i,key in enumerate(key_positions):
+    w = key.get("w",1)
+    h = key.get("h",1)
+    x = key.get("x",0)
+    y = key.get("y",0)
+    print("if(index == {})".format(i))
+    print("  translate_u({}, {})".format(x+w/2, -(y+h/2)))
+    print("  u({})".format(w))
+    print("  uh({})".format(h))
+    print("  children();")
+
+  print("}")
+
+if __name__ == "__main__":
+  main()

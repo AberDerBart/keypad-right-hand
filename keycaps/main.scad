@@ -3,68 +3,51 @@ include <key_positions.scad>
 
 include <labeledKeys.scad>
 
-nKeys = len($key_positions) - 1;
+nKeys = 37;
 
-*let(
+$key_shape_type = "sculpted_square";
+$bottom_key_width = 18.24; // 18.4;
+$bottom_key_height = 18.24; // 18.4;
+$width_difference = 6; // 5.7;
+$height_difference = 6; // 5.7;
+$top_skew = 0;
+$dish_type = "cylindrical";
+$dish_depth = 1.2;
+$dish_skew_x = 0;
+$dish_skew_y = 0;
+$height_slices = 10;
+$enable_side_sculpting = true;
+$corner_radius = 1;
+
+dsa_row(2)
+let(
+  $top_tilt=0,
+  $dish_type = "cylindrical",
   $dish_depth = 1,
   $stem_type = "cherry",
   $stem_support_height = .4,
   $stem_inset = 0,
   $stem_slop = .1,
   $stem_inner_slop = $stem_slop,
-  $support_type = "disable",
-  $corner_radius = 2,
-  $width_difference = 4,
-  $total_depth = $total_depth - 4,
-  $inset_legend_depth = 0.4,
   $cherry_bevel = true,
-  $rounded_cherry_stem_d = 6
-){
-  stem($stem_type, 6, 0, 0); 
-  stem_support($stem_support_type,$stem_type, $stem_support_height, $stem_slop);
-}
-
-
-module custom_row(row) {
-  let(
-    $top_tilt = -max((row-3), 0)*7 -5,
-    $total_depth = max((row-3), 0)*2+7
-  ) children();
+  //$support_type = "disable",
+  $width_difference = 5,
+  $height_difference = 5,
+  $inset_legend_depth = 0.6,
+  $cherry_bevel=true,
+  $total_depth=6,
+  $font="DejaVu Sans Mono:style=Book",
+  $support_type="flat"
+)
   
-}
-
 for(i = [0:nKeys]) {
-  if($key_positions[i] != undef){
-    x = $key_positions[i][0];
-    y = $key_positions[i][1];
-    w = $key_positions[i][2];
-    h = $key_positions[i][3];
-
-    //if(x==2 || x == 3)
-    translate_u(x,y)
-    u(w)
-    uh(h)
-    labeledKey(i)
-    oem_row(0)
-    let(
-      $key_shape_type = "square",
-      $dish_depth = 1,
-      $stem_type = "cherry",
-      $stem_support_height = .4,
-      $stem_inset = 0,
-      $stem_slop = .1,
-      $stem_inner_slop = $stem_slop,
-      $cherry_bevel = true,
-      //$support_type = "disable",
-      $width_difference = 4,
-      $inset_legend_depth = 0.4,
-      $font="DejaVu Sans Mono:style=Book"
-    )custom_row(y){
+  if (i != 7 && i != 11 && i != 16 && i != 17 && i != 18 && i != 20 && i != 27 && i < 32)
+    positionedKey(i)labeledKey(i){
       key();
       key_brim();
     }
-  }
 }
+
 
 module key_brim() {
   unit = 19.05;
